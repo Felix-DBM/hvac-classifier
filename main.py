@@ -7,15 +7,21 @@ from config import Config
 from models import db, IFCModel, HVACComponent, DistributionSystem, ClassificationMapping
 from classifier.hvac_extractor import extract_and_persist
 
-app = Flask(__name__)
+# Flask so initialisieren, dass es web_interface/templates und web_interface/static verwendet:
+app = Flask(
+    __name__,
+    template_folder="web_interface/templates",
+    static_folder="web_interface/static"
+)
 app.config.from_object(Config)
 db.init_app(app)
 
 @app.route("/", methods=["GET"])
 def index():
-    model = IFCModel.query.order_by(IFCModel.uploaded_at.desc()).first()
+    model    = IFCModel.query.order_by(IFCModel.uploaded_at.desc()).first()
     components = model.components if model else []
     mappings = ClassificationMapping.query.all()
+    # Nur Dateiname, kein Pfad:
     return render_template("index.html", components=components, mappings=mappings)
 
 @app.route("/upload", methods=["POST"])
@@ -23,7 +29,7 @@ def upload_model():
     file = request.files.get("ifc_file")
     if not file:
         return redirect(url_for("index"))
-    filename = secure_filename(file.filename)
+    filename   = secure_filename(file.filename)
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
     upload_path = os.path.join(upload_dir, filename)
@@ -36,7 +42,7 @@ def upload_model():
 
 @app.route("/detail/<int:id>", methods=["GET", "POST"])
 def component_detail(id):
-    comp = HVACComponent.query.get_or_404(id)
+    comp     = HVACComponent.query.get_or_404(id)
     mappings = ClassificationMapping.query.all()
     if request.method == "POST":
         comp.mapping_id = request.form.get("mapping")
@@ -47,14 +53,17 @@ def component_detail(id):
 @app.route("/export", methods=["GET"])
 def export():
     path = "export.csv"
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write("Global ID,Name,IFC Class,System,Category\n")
         for comp in HVACComponent.query.all():
-            f.write(f"{comp.global_id},{comp.name},{comp.ifc_class},{comp.system.name if comp.system else ''},{comp.mapping.target_category if comp.mapping else ''}\n")
+            f.write(
+                f"{comp.global_id},{comp.name},{comp.ifc_class},"
+                f"{comp.system.name if comp.system else ''},"
+                f"{comp.mapping.target_category if comp.mapping else ''}\n"
+            )
     return send_file(path, as_attachment=True)
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
