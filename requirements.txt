@@ -1,4 +1,4 @@
 ifcopenshell
 Flask
-SQLAlchemy
+Flask-SQLAlchemy
 psycopg2-binary
