@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HVAC-Classifier | Intelligent BIM Classification{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('index') }}" class="sidebar-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-fan"></i>
+                    </div>
+                    <span>HVAC-Classifier</span>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{{ url_for('index') }}" class="nav-link {{ 'active' if request.endpoint == 'index' else '' }}">
+                        <i class="fas fa-tachometer-alt nav-icon"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                        <i class="fas fa-upload nav-icon"></i>
+                        <span>Modell hochladen</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('list_samples') }}" class="nav-link {{ 'active' if request.endpoint == 'list_samples' else '' }}">
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <span>Beispieldateien</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#convertModal">
+                        <i class="fas fa-exchange-alt nav-icon"></i>
+                        <span>BAS-Code Konverter</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#apiModal">
+                        <i class="fas fa-code nav-icon"></i>
+                        <span>API-Dokumentation</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#helpModal">
+                        <i class="fas fa-question-circle nav-icon"></i>
+                        <span>Hilfe / About</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} alert-icon"></i>
+                                <div>
+                                    {{ message }}
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">{% block page_title %}HVAC-Classifier{% endblock %}</h1>
+                
+                {% block page_actions %}{% endblock %}
+            </div>
+            
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">
+                        <i class="fas fa-upload me-2"></i> IFC-Datei hochladen
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="fileInput" class="form-label">IFC-Datei auswählen</label>
+                            <input class="form-control" type="file" id="fileInput" name="file" accept=".ifc" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="standardSelect" class="form-label">BAS-Standard</label>
+                            <select class="form-select" id="standardSelect" name="standard">
+                                <option value="amev" selected>AMEV</option>
+                                <option value="vdi">VDI 3814</option>
+                            </select>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="electronicOnlyCheck" name="electronic_only" value="true" checked>
+                            <label class="form-check-label" for="electronicOnlyCheck">
+                                Nur elektronisch gesteuerte Elemente berücksichtigen
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i> Hochladen und klassifizieren
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Convert Modal -->
+    <div class="modal fade" id="convertModal" tabindex="-1" aria-labelledby="convertModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="convertModalLabel">
+                        <i class="fas fa-exchange-alt me-2"></i> BAS-Code Konverter
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fromStandardSelect" class="form-label">Von Standard</label>
+                        <select class="form-select" id="fromStandardSelect">
+                            <option value="amev" selected>AMEV</option>
+                            <option value="vdi">VDI 3814</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 text-center">
+                        <button type="button" class="btn btn-light btn-sm" id="swapStandardsButton">
+                            <i class="fas fa-exchange-alt"></i> Tauschen
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="toStandardSelect" class="form-label">Zu Standard</label>
+                        <select class="form-select" id="toStandardSelect">
+                            <option value="amev">AMEV</option>
+                            <option value="vdi" selected>VDI 3814</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="codeInput" class="form-label">BAS-Code</label>
+                        <input type="text" class="form-control" id="codeInput" placeholder="BAS-Code eingeben...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="convertedCodeOutput" class="form-label">Konvertierter Code</label>
+                        <input type="text" class="form-control" id="convertedCodeOutput" readonly>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Schließen</button>
+                    <button type="button" class="btn btn-primary" id="convertButton">
+                        <i class="fas fa-exchange-alt me-2"></i> Konvertieren
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- API Modal -->
+    <div class="modal fade" id="apiModal" tabindex="-1" aria-labelledby="apiModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="apiModalLabel">
+                        <i class="fas fa-code me-2"></i> API-Dokumentation
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>REST-API Endpunkte</h4>
+                    <p>
+                        HVAC-Classifier bietet eine REST-API für die Integration in andere Anwendungen.
+                        Hier sind die verfügbaren Endpunkte:
+                    </p>
+                    
+                    <div class="property-card">
+                        <div class="property-header">
+                            <h6 class="property-title">POST /api/upload</h6>
+                        </div>
+                        <p class="mb-2">Lädt eine IFC-Datei hoch und klassifiziert HVAC-Komponenten.</p>
+                        <div class="mb-2">
+                            <strong>Parameter:</strong>
+                            <ul>
+                                <li><code>file</code> - Die IFC-Datei (multipart/form-data)</li>
+                                <li><code>standard</code> - Der BAS-Standard (amev oder vdi)</li>
+                                <li><code>electronic_only</code> - Nur elektronisch gesteuerte Elemente (true/false)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Rückgabe:</strong>
+                            <pre class="bg-light p-2"><code>{
+  "model_id": 123,
+  "filename": "beispiel.ifc",
+  "uploaded_at": "2025-05-14T10:30:45",
+  "component_count": 42,
+  "flat_results": [{...}],
+  "hierarchy": {...}
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="property-card">
+                        <div class="property-header">
+                            <h6 class="property-title">GET /api/model/{model_id}</h6>
+                        </div>
+                        <p class="mb-2">Gibt Informationen zu einem verarbeiteten Modell zurück.</p>
+                        <div class="mb-2">
+                            <strong>Parameter:</strong>
+                            <ul>
+                                <li><code>model_id</code> - ID des Modells</li>
+                                <li><code>electronic_only</code> - Optional: Nur elektronische Komponenten (true/false)</li>
+                                <li><code>system_id</code> - Optional: Filtern nach System-ID</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="property-card">
+                        <div class="property-header">
+                            <h6 class="property-title">GET /api/component/{component_id}</h6>
+                        </div>
+                        <p class="mb-2">Gibt detaillierte Informationen zu einer Komponente zurück.</p>
+                        <div class="mb-2">
+                            <strong>Parameter:</strong>
+                            <ul>
+                                <li><code>component_id</code> - ID der Komponente</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="property-card">
+                        <div class="property-header">
+                            <h6 class="property-title">POST /api/convert</h6>
+                        </div>
+                        <p class="mb-2">Konvertiert einen BAS-Code zwischen Standards.</p>
+                        <div class="mb-2">
+                            <strong>Body (JSON):</strong>
+                            <pre class="bg-light p-2"><code>{
+  "code": "HEI_01_ERH_HZV_S001_R105_T~~01_MW-01_TL",
+  "from_standard": "amev",
+  "to_standard": "vdi"
+}</code></pre>
+                        </div>
+                        <div>
+                            <strong>Rückgabe:</strong>
+                            <pre class="bg-light p-2"><code>{
+  "original_code": "HEI_01_ERH_HZV_S001_R105_T~~01_MW-01_TL",
+  "converted_code": "HEI_01_S01_R10_U1_101",
+  "from_standard": "amev",
+  "to_standard": "vdi"
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="property-card">
+                        <div class="property-header">
+                            <h6 class="property-title">GET /api/statistics</h6>
+                        </div>
+                        <p class="mb-2">Gibt statistische Daten zur Anwendung zurück.</p>
+                        <div>
+                            <strong>Rückgabe:</strong>
+                            <pre class="bg-light p-2"><code>{
+  "models_count": 15,
+  "components_count": 743,
+  "electronic_count": 213,
+  "electronic_percentage": 28.7,
+  "class_distribution": {
+    "IfcFlowController": 125,
+    "IfcFlowTerminal": 205,
+    ...
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Verstanden</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">
+                        <i class="fas fa-question-circle me-2"></i> Hilfe & Über
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>HVAC-Classifier Version 1.0</h4>
+                    <p>
+                        HVAC-Classifier ist ein Tool zur automatischen Klassifizierung von HVAC-Komponenten (Heizung, Lüftung, Klimatechnik) 
+                        in IFC-Dateien nach BAS-Standards (Building Automation System). Die Anwendung extrahiert relevante Informationen 
+                        aus BIM-Modellen und generiert standardisierte BAS-Codes nach AMEV oder VDI 3814.
+                    </p>
+                    
+                    <h5 class="mt-4">Funktionen</h5>
+                    <ul>
+                        <li>Extraktion von HVAC-Komponenten aus IFC-Dateien</li>
+                        <li>Identifizierung elektronisch gesteuerter Komponenten</li>
+                        <li>Klassifizierung nach BAS-Standards</li>
+                        <li>Standortbezogene Klassifizierung (Berücksichtigung von Stockwerk und Raum)</li>
+                        <li>REST-API für Integration in andere Systeme</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">Verwendung</h5>
+                    <ol>
+                        <li>Lade eine IFC-Datei über den "Modell hochladen" Button hoch</li>
+                        <li>Wähle den gewünschten BAS-Standard (AMEV oder VDI)</li>
+                        <li>Entscheide, ob nur elektronisch gesteuerte Elemente berücksichtigt werden sollen</li>
+                        <li>Starte die Klassifizierung</li>
+                        <li>Die Ergebnisse werden dann in einer übersichtlichen Tabelle dargestellt</li>
+                    </ol>
+                    
+                    <h5 class="mt-4">BAS-Standards</h5>
+                    <p>
+                        Die Anwendung unterstützt zwei gängige Standards für die Gebäudeautomation:
+                    </p>
+                    <ul>
+                        <li><strong>AMEV</strong>: Der Standard des Arbeitskreises Maschinen- und Elektrotechnik staatlicher und kommunaler Verwaltungen (Deutschland)</li>
+                        <li><strong>VDI 3814</strong>: Der Standard des Vereins Deutscher Ingenieure für die Gebäudeautomation</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">Technische Details</h5>
+                    <p>
+                        HVAC-Classifier basiert auf Python mit Flask als Web-Framework und verwendet IfcOpenShell zur Verarbeitung von IFC-Dateien.
+                        Die Anwendung speichert die Ergebnisse in einer Datenbank und bietet eine REST-API für die Integration in andere Systeme.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Verstanden</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='javascripts/index.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

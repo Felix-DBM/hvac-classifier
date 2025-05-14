@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="details-container">
+    <div class="details-main">
+        <div class="details-header">
+            <h2 class="details-title">{{ component.name }}</h2>
+            <p class="details-subtitle">{{ component.ifc_class }}</p>
+        </div>
+        
+        <div class="details-section">
+            <h3 class="details-section-title">
+                <i class="fas fa-id-card"></i>
+                Allgemeine Informationen
+            </h3>
+            <table class="info-table">
+                <tbody>
+                    <tr>
+                        <th>ID:</th>
+                        <td>{{ component.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>GlobalId:</th>
+                        <td>{{ component.global_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Name:</th>
+                        <td>{{ component.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>IFC-Klasse:</th>
+                        <td><span class="badge badge-ifc">{{ component.ifc_class }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Elektronisch gesteuert:</th>
+                        <td>
+                            <span class="badge {{ 'badge-electronic' if component.is_electronic else 'badge-non-electronic' }}">
+                                {{ 'Ja' if component.is_electronic else 'Nein' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>BAS-Code:</th>
+                        <td><span class="badge badge-bas">{{ component.bas_code }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>BAS-Standard:</th>
+                        <td>{{ component.bas_standard|upper }}</td>
+                    </tr>
+                    <tr>
+                        <th>Modell:</th>
+                        <td>
+                            <a href="{{ url_for('view_model', model_id=component.model_id) }}">
+                                {{ component.model.filename }}
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="details-section">
+            <h3 class="details-section-title">
+                <i class="fas fa-map-marker-alt"></i>
+                Standort
+            </h3>
+            {% if component.location %}
+                <div class="p-3 bg-light rounded">
+                    {% if component.location.storey_name %}
+                        <div class="mb-2">
+                            <strong>Geschoss:</strong> {{ component.location.storey_name }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if component.location.space_name %}
+                        <div>
+                            <strong>Raum:</strong> {{ component.location.space_name }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Keine Standortinformationen verfügbar
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if component.properties %}
+            <div class="details-section">
+                <h3 class="details-section-title">
+                    <i class="fas fa-list-ul"></i>
+                    Eigenschaften
+                </h3>
+                
+                {% for prop_name, prop_value in component.properties.items() %}
+                    {% if not prop_name.startswith('PropertySet_') %}
+                        <div class="property-card">
+                            <div class="property-header">
+                                <h6 class="property-title">{{ prop_name }}</h6>
+                            </div>
+                            <ul class="property-list">
+                                <li class="property-item">
+                                    <span class="property-key">Wert:</span>
+                                    <span class="property-value">{{ prop_value }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for pset_name, pset in component.properties.items() %}
+                    {% if pset_name.startswith('PropertySet_') %}
+                        <div class="property-card">
+                            <div class="property-header">
+                                <h6 class="property-title">{{ pset_name|replace('PropertySet_', '') }}</h6>
+                            </div>
+                            <ul class="property-list">
+                                {% for key, value in pset.items() %}
+                                    <li class="property-item">
+                                        <span class="property-key">{{ key }}:</span>
+                                        <span class="property-value">{{ value }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="details-sidebar">
+        <div class="details-section">
+            <h3 class="details-section-title">
+                <i class="fas fa-cubes"></i>
+                BAS-Informationen
+            </h3>
+            
+            <div class="mb-4">
+                <h5>BAS-Code</h5>
+                <div class="p-3 bg-light rounded mb-3">
+                    <code class="text-primary d-block">{{ component.bas_code }}</code>
+                </div>
+                
+                <h5>Standard</h5>
+                <p>{{ component.bas_standard|upper }}</p>
+                
+                {% if component.bas_standard == 'amev' %}
+                    <h5>AMEV-Format</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Beschreibung</th>
+                                <th>Wert</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set parts = component.bas_code.split('_') %}
+                            {% if parts|length >= 1 %}
+                                <tr>
+                                    <td>1</td>
+                                    <td>Gewerk</td>
+                                    <td><code>{{ parts[0] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 2 %}
+                                <tr>
+                                    <td>2</td>
+                                    <td>Anlage</td>
+                                    <td><code>{{ parts[1] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 3 %}
+                                <tr>
+                                    <td>3</td>
+                                    <td>Baugruppe</td>
+                                    <td><code>{{ parts[2] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 4 %}
+                                <tr>
+                                    <td>4</td>
+                                    <td>Medium</td>
+                                    <td><code>{{ parts[3] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 5 %}
+                                <tr>
+                                    <td>5</td>
+                                    <td>Position</td>
+                                    <td><code>{{ parts[4] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 6 %}
+                                <tr>
+                                    <td>6</td>
+                                    <td>Aggregat</td>
+                                    <td><code>{{ parts[5] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 7 %}
+                                <tr>
+                                    <td>7</td>
+                                    <td>Betriebsmittel</td>
+                                    <td><code>{{ parts[6] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 8 %}
+                                <tr>
+                                    <td>8</td>
+                                    <td>Funktion</td>
+                                    <td><code>{{ parts[7] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 9 %}
+                                <tr>
+                                    <td>9</td>
+                                    <td>Erw. Funktion</td>
+                                    <td><code>{{ parts[8] }}</code></td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                {% elif component.bas_standard == 'vdi' %}
+                    <h5>VDI-Format</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Beschreibung</th>
+                                <th>Wert</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set parts = component.bas_code.split('_') %}
+                            {% if parts|length >= 1 %}
+                                <tr>
+                                    <td>1</td>
+                                    <td>Gewerk</td>
+                                    <td><code>{{ parts[0] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 2 %}
+                                <tr>
+                                    <td>2</td>
+                                    <td>Anlage</td>
+                                    <td><code>{{ parts[1] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 3 %}
+                                <tr>
+                                    <td>3</td>
+                                    <td>Betriebsmittel</td>
+                                    <td><code>{{ parts[2] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 4 %}
+                                <tr>
+                                    <td>4</td>
+                                    <td>Aggregat</td>
+                                    <td><code>{{ parts[3] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 5 %}
+                                <tr>
+                                    <td>5</td>
+                                    <td>Funktion</td>
+                                    <td><code>{{ parts[4] }}</code></td>
+                                </tr>
+                            {% endif %}
+                            {% if parts|length >= 6 %}
+                                <tr>
+                                    <td>6</td>
+                                    <td>Zusatz</td>
+                                    <td><code>{{ parts[5] }}</code></td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="details-section">
+            <h3 class="details-section-title">
+                <i class="fas fa-exchange-alt"></i>
+                Standard konvertieren
+            </h3>
+            
+            <div class="mb-3">
+                <label for="targetStandard" class="form-label">Zielstandard</label>
+                <select class="form-select" id="targetStandard">
+                    <option value="amev" {{ 'selected' if component.bas_standard != 'amev' }}>AMEV</option>
+                    <option value="vdi" {{ 'selected' if component.bas_standard != 'vdi' }}>VDI 3814</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="convertedCode" class="form-label">Konvertierter Code</label>
+                <input type="text" class="form-control" id="convertedCode" readonly>
+            </div>
+            
+            <button type="button" class="btn btn-primary w-100" id="convertButton">
+                <i class="fas fa-exchange-alt me-2"></i> Konvertieren
+            </button>
+        </div>
+        
+        <div class="details-section">
+            <h3 class="details-section-title">
+                <i class="fas fa-cogs"></i>
+                Aktionen
+            </h3>
+            
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('view_model', model_id=component.model_id) }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i> Zurück zum Modell
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-light">
+                    <i class="fas fa-home me-2"></i> Zur Übersicht
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Konvertieren-Button
+    const convertButton = document.getElementById('convertButton');
+    const targetStandard = document.getElementById('targetStandard');
+    const convertedCode = document.getElementById('convertedCode');
+    
+    if (convertButton && targetStandard && convertedCode) {
+        convertButton.addEventListener('click', function() {
+            // API-Anfrage senden
+            fetch('/api/convert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: '{{ component.bas_code }}',
+                    from_standard: '{{ component.bas_standard }}',
+                    to_standard: targetStandard.value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    // Fehlermeldung anzeigen
+                    alert('Fehler: ' + data.error);
+                } else {
+                    // Konvertierten Code anzeigen
+                    convertedCode.value = data.converted_code;
+                }
+            })
+            .catch(error => {
+                console.error('Konvertierungsfehler:', error);
+                alert('Fehler bei der Konvertierung.');
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

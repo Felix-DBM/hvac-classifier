@@ -1,198 +1,449 @@
-// HVAC-Classifier Main JavaScript
+/**
+ * HVAC-Classifier - JavaScript Funktionen
+ * Stellt Funktionalität für die Benutzeroberfläche bereit.
+ */
 
-// DOM Elements
 document.addEventListener('DOMContentLoaded', function() {
-    // Elements
-    const searchInput = document.querySelector('.search-input');
-    const filterSelects = document.querySelectorAll('.filter-select');
-    const tableRows = document.querySelectorAll('.data-table tbody tr');
-    const paginationButtons = document.querySelectorAll('.page-btn');
-    
-    // Search functionality
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-            
-            updatePaginationInfo();
-        });
-    }
-    
-    // Filter functionality
-    filterSelects.forEach(select => {
-        select.addEventListener('change', function() {
-            applyFilters();
-        });
-    });
-    
-    // Apply all active filters
-    function applyFilters() {
-        const activeFilters = Array.from(filterSelects)
-            .filter(select => select.selectedIndex !== 0)
-            .map(select => ({
-                type: select.options[0].text,
-                value: select.value
-            }));
-        
-        if (activeFilters.length === 0) {
-            tableRows.forEach(row => row.style.display = '');
-            return;
-        }
-        
-        tableRows.forEach(row => {
-            const shouldShow = activeFilters.every(filter => {
-                let cellValue;
-                
-                // Find the appropriate column based on filter type
-                if (filter.type === 'IFC-Klasse') {
-                    cellValue = row.querySelector('td:nth-child(4)').textContent;
-                } else if (filter.type === 'System') {
-                    cellValue = row.querySelector('td:nth-child(5)').textContent;
-                }
-                
-                return cellValue && cellValue.includes(filter.value);
-            });
-            
-            row.style.display = shouldShow ? '' : 'none';
-        });
-        
-        updatePaginationInfo();
-    }
-    
-    // Update pagination info text
-    function updatePaginationInfo() {
-        const visibleRows = document.querySelectorAll('.data-table tbody tr[style=""]').length;
-        const totalRows = tableRows.length;
-        const pageInfoElement = document.querySelector('.page-info');
-        
-        if (pageInfoElement) {
-            if (visibleRows === totalRows) {
-                pageInfoElement.textContent = `Zeige 1-${visibleRows} von ${totalRows} Komponenten`;
-            } else {
-                pageInfoElement.textContent = `Zeige ${visibleRows} von ${totalRows} Komponenten (gefiltert)`;
-            }
-        }
-    }
-    
-    // Pagination
-    paginationButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            if (this.disabled || this.classList.contains('active')) {
-                return;
-            }
-            
-            // Remove active class from all buttons
-            paginationButtons.forEach(btn => btn.classList.remove('active'));
-            
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            // You would implement actual pagination logic here
-            // This is just a UI demonstration
-        });
-    });
-    
-    // Flash message auto-close
-    const flashMessages = document.querySelectorAll('.alert');
-    flashMessages.forEach(message => {
+    // Flash Messages nach 5 Sekunden automatisch schließen
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
         setTimeout(() => {
-            const closeButton = message.querySelector('.btn-close');
+            const closeButton = alert.querySelector('.btn-close');
             if (closeButton) {
                 closeButton.click();
             }
         }, 5000);
     });
+
+    // Suchfunktion für Komponententabelle
+    setupSearch();
     
-    // Initialize tooltips if needed
-    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    }
+    // Filter für Komponententabelle
+    setupFilters();
     
-    // Modal functionality enhancements
-    const editModal = document.getElementById('editModal');
-    if (editModal) {
-        editModal.addEventListener('show.bs.modal', function (event) {
-            // Get the button that triggered the modal
-            const button = event.relatedTarget;
-            
-            // Get the row data from the parent row
-            const row = button.closest('tr');
-            const id = row.querySelector('.component-id').textContent;
-            const name = row.querySelector('.component-name').textContent;
-            const ifcClass = row.querySelector('.badge-ifc').textContent;
-            const system = row.querySelector('.badge-system').textContent;
-            const category = row.querySelector('.badge-category').textContent;
-            
-            // Update the modal content with the row data
-            const modal = this;
-            modal.querySelector('td.component-id').textContent = id;
-            
-            // Set the category in the select dropdown
-            const categorySelect = modal.querySelector('#categorySelect');
-            for (let i = 0; i < categorySelect.options.length; i++) {
-                if (categorySelect.options[i].text === category) {
-                    categorySelect.selectedIndex = i;
-                    break;
-                }
-            }
-        });
-    }
+    // BAS-Code Konverter
+    setupCodeConverter();
+    
+    // Komponentendetails anzeigen
+    setupComponentDetails();
+    
+    // Upload-Bereich Drag & Drop
+    setupDragDropUpload();
 });
 
-// Handle model classification - this would connect to the backend
-function classifyModel() {
-    // Show loading state
-    const button = document.querySelector('.btn-primary');
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin btn-icon"></i> Klassifiziere...';
-    button.disabled = true;
+/**
+ * Richtet die Suchfunktion für die Komponententabelle ein
+ */
+function setupSearch() {
+    const searchInput = document.querySelector('.search-input');
+    if (!searchInput) return;
     
-    // Simulate API call
-    setTimeout(() => {
-        // Reset button state
-        button.innerHTML = originalText;
-        button.disabled = false;
+    searchInput.addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        const table = document.querySelector('.data-table');
+        if (!table) return;
         
-        // Show success message
-        showNotification('Modell erfolgreich klassifiziert!', 'success');
-    }, 2000);
-    
-    return false;
+        const rows = table.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        updatePaginationInfo();
+    });
 }
 
-// Show notification
-function showNotification(message, type = 'success') {
-    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+/**
+ * Richtet die Filter für die Komponententabelle ein
+ */
+function setupFilters() {
+    const filterSelects = document.querySelectorAll('.filter-select');
+    if (filterSelects.length === 0) return;
     
-    const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-            <i class="fas ${iconClass} alert-icon"></i>
-            <div>
-                <strong>${type === 'success' ? 'Erfolg!' : 'Fehler!'}</strong> ${message}
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            applyFilters();
+        });
+    });
+}
+
+/**
+ * Wendet alle Filter auf die Tabelle an
+ */
+function applyFilters() {
+    const table = document.querySelector('.data-table');
+    if (!table) return;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    const filters = {};
+    
+    // Filter-Werte sammeln
+    document.querySelectorAll('.filter-select').forEach(select => {
+        const filterType = select.getAttribute('data-filter');
+        const value = select.value;
+        
+        if (value && value !== 'all') {
+            filters[filterType] = value;
+        }
+    });
+    
+    // Auf Zeilen anwenden
+    rows.forEach(row => {
+        let showRow = true;
+        
+        // Überprüfe jeden Filter
+        for (const [filterType, filterValue] of Object.entries(filters)) {
+            const cell = row.querySelector(`[data-${filterType}]`);
+            if (!cell || cell.getAttribute(`data-${filterType}`) !== filterValue) {
+                showRow = false;
+                break;
+            }
+        }
+        
+        row.style.display = showRow ? '' : 'none';
+    });
+    
+    updatePaginationInfo();
+}
+
+/**
+ * Aktualisiert die Pagination-Informationen
+ */
+function updatePaginationInfo() {
+    const table = document.querySelector('.data-table');
+    const paginationInfo = document.querySelector('.page-info');
+    if (!table || !paginationInfo) return;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    
+    paginationInfo.textContent = `Zeige ${visibleRows.length} von ${rows.length} Komponenten`;
+}
+
+/**
+ * Richtet den BAS-Code Konverter ein
+ */
+function setupCodeConverter() {
+    const convertButton = document.getElementById('convertButton');
+    if (!convertButton) return;
+    
+    convertButton.addEventListener('click', function() {
+        const fromStandard = document.getElementById('fromStandardSelect').value;
+        const toStandard = document.getElementById('toStandardSelect').value;
+        const code = document.getElementById('codeInput').value.trim();
+        
+        if (!code) {
+            showToast('Bitte geben Sie einen BAS-Code ein', 'warning');
+            return;
+        }
+        
+        // API-Anfrage senden
+        fetch('/api/convert', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                code: code,
+                from_standard: fromStandard,
+                to_standard: toStandard
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                document.getElementById('convertedCodeOutput').value = data.converted_code;
+                showToast('Code erfolgreich konvertiert', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Konvertierungsfehler:', error);
+            showToast('Fehler bei der Konvertierung', 'error');
+        });
+    });
+    
+    // Tauschen-Button-Funktionalität
+    const swapButton = document.getElementById('swapStandardsButton');
+    if (swapButton) {
+        swapButton.addEventListener('click', function() {
+            const fromSelect = document.getElementById('fromStandardSelect');
+            const toSelect = document.getElementById('toStandardSelect');
+            
+            const tempValue = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = tempValue;
+        });
+    }
+}
+
+/**
+ * Richtet die Funktionalität für Komponentendetails ein
+ */
+function setupComponentDetails() {
+    // Detailansicht Modal
+    const detailButtons = document.querySelectorAll('.btn-details');
+    if (detailButtons.length === 0) return;
+    
+    detailButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const componentId = this.getAttribute('data-component-id');
+            
+            // API-Anfrage für Komponentendetails
+            fetch(`/api/component/${componentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Modal mit Komponentendaten füllen
+                    fillComponentModal(data);
+                    
+                    // Modal anzeigen
+                    const componentModal = new bootstrap.Modal(document.getElementById('componentModal'));
+                    componentModal.show();
+                })
+                .catch(error => {
+                    console.error('Fehler beim Laden der Komponentendetails:', error);
+                    showToast('Fehler beim Laden der Komponentendetails', 'error');
+                });
+        });
+    });
+}
+
+/**
+ * Füllt das Modal mit Komponentendaten
+ */
+function fillComponentModal(component) {
+    const modal = document.getElementById('componentModal');
+    if (!modal) return;
+    
+    // Grundinformationen
+    modal.querySelector('.modal-title').textContent = component.element_name;
+    
+    // Allgemeine Informationen
+    document.getElementById('component-id').textContent = component.element_id;
+    document.getElementById('component-global-id').textContent = component.global_id || '-';
+    document.getElementById('component-name').textContent = component.element_name;
+    document.getElementById('component-class').textContent = component.element_type;
+    
+    // Badge für elektronisch
+    const electronicBadge = document.getElementById('component-electronic');
+    electronicBadge.textContent = component.is_electronic ? 'Ja' : 'Nein';
+    electronicBadge.className = component.is_electronic ? 
+        'badge badge-electronic' : 'badge badge-non-electronic';
+    
+    // BAS-Code
+    document.getElementById('component-bas-code').textContent = component.bas_code || '-';
+    document.getElementById('component-bas-standard').textContent = 
+        (component.standard || 'amev').toUpperCase();
+    
+    // Standort
+    const locationContainer = document.getElementById('location-info');
+    if (component.location) {
+        let locationHTML = '';
+        
+        if (component.location.storey_name) {
+            locationHTML += `<div class="location-item">
+                <span class="location-label">Geschoss:</span>
+                <span class="location-value">${component.location.storey_name}</span>
+            </div>`;
+        }
+        
+        if (component.location.space_name) {
+            locationHTML += `<div class="location-item">
+                <span class="location-label">Raum:</span>
+                <span class="location-value">${component.location.space_name}</span>
+            </div>`;
+        }
+        
+        locationContainer.innerHTML = locationHTML;
+        locationContainer.style.display = 'block';
+    } else {
+        locationContainer.innerHTML = '<p>Keine Standortinformationen verfügbar</p>';
+        locationContainer.style.display = 'block';
+    }
+    
+    // Eigenschaften
+    const propertiesContainer = document.getElementById('properties-container');
+    if (component.properties && Object.keys(component.properties).length > 0) {
+        let propertiesHTML = '';
+        
+        // Gruppiere Properties nach PropertySets
+        const groupedProps = {};
+        
+        for (const [key, value] of Object.entries(component.properties)) {
+            if (key.startsWith('PropertySet_')) {
+                // Property Set-Name
+                const psetName = key.replace('PropertySet_', '');
+                if (!groupedProps[psetName]) {
+                    groupedProps[psetName] = {};
+                }
+            } else {
+                // Normale Eigenschaft - zum "Allgemein" Pset hinzufügen
+                if (!groupedProps['Allgemein']) {
+                    groupedProps['Allgemein'] = {};
+                }
+                groupedProps['Allgemein'][key] = value;
+            }
+        }
+        
+        // Property-Karten erstellen
+        for (const [psetName, props] of Object.entries(groupedProps)) {
+            if (Object.keys(props).length === 0) continue;
+            
+            propertiesHTML += `
+            <div class="property-card">
+                <div class="property-header">
+                    <h6 class="property-title">${psetName}</h6>
+                </div>
+                <ul class="property-list">`;
+            
+            for (const [propName, propValue] of Object.entries(props)) {
+                propertiesHTML += `
+                <li class="property-item">
+                    <span class="property-key">${propName}:</span>
+                    <span class="property-value">${formatPropertyValue(propValue)}</span>
+                </li>`;
+            }
+            
+            propertiesHTML += `
+                </ul>
+            </div>`;
+        }
+        
+        propertiesContainer.innerHTML = propertiesHTML;
+        propertiesContainer.style.display = 'block';
+    } else {
+        propertiesContainer.innerHTML = '<p>Keine Eigenschaften verfügbar</p>';
+        propertiesContainer.style.display = 'block';
+    }
+}
+
+/**
+ * Formatiert einen Eigenschaftswert für die Anzeige
+ */
+function formatPropertyValue(value) {
+    if (value === null || value === undefined) {
+        return '-';
+    }
+    
+    if (typeof value === 'boolean') {
+        return value ? 'Ja' : 'Nein';
+    }
+    
+    if (typeof value === 'object') {
+        return JSON.stringify(value);
+    }
+    
+    return value.toString();
+}
+
+/**
+ * Richtet Drag & Drop für den Upload-Bereich ein
+ */
+function setupDragDropUpload() {
+    const dropArea = document.querySelector('.upload-area');
+    if (!dropArea) return;
+    
+    // Verhindere Standardverhalten für Drag-Events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Hervorheben beim Darüberziehen
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('highlight');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('highlight');
+    }
+    
+    // Dateien verarbeiten
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.files = files;
+            
+            // Dateinamen anzeigen
+            const fileNameDisplay = document.querySelector('.file-name');
+            if (fileNameDisplay) {
+                fileNameDisplay.textContent = files[0].name;
+            }
+        }
+    }
+}
+
+/**
+ * Zeigt eine Toast-Nachricht an
+ */
+function showToast(message, type = 'info') {
+    // Existierende Toast-Container suchen oder erstellen
+    let toastContainer = document.querySelector('.toast-container');
+    
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Toast-Element erstellen
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type}`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.setAttribute('id', toastId);
+    
+    // Toast-Inhalt
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     `;
     
-    const flashContainer = document.querySelector('.flash-message');
-    if (flashContainer) {
-        flashContainer.innerHTML = alertHtml;
-        
-        // Auto-close after 5 seconds
-        setTimeout(() => {
-            const alert = flashContainer.querySelector('.alert');
-            if (alert) {
-                const closeBtn = alert.querySelector('.btn-close');
-                if (closeBtn) closeBtn.click();
-            }
-        }, 5000);
-    }
+    // Toast zum Container hinzufügen
+    toastContainer.appendChild(toast);
+    
+    // Toast anzeigen
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 5000
+    });
+    bsToast.show();
+    
+    // Toast nach 5 Sekunden entfernen
+    setTimeout(() => {
+        const toastElement = document.getElementById(toastId);
+        if (toastElement) {
+            toastElement.remove();
+        }
+    }, 5000);
 }

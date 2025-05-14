@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="samples-list">
+    <div class="samples-header">
+        <h2 class="samples-title">
+            <i class="fas fa-file-alt"></i>
+            Beispieldateien
+        </h2>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left btn-icon"></i> Zurück zur Übersicht
+            </a>
+        </div>
+    </div>
+    
+    <p class="mb-4">Diese vorgefertigten IFC-Dateien können zum Testen des HVAC-Classifiers verwendet werden.</p>
+    
+    {% if samples %}
+        {% for sample in samples %}
+        <div class="sample-item">
+            <div class="sample-info">
+                <div class="sample-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="sample-details">
+                    <h4>{{ sample.filename }}</h4>
+                    <p>{{ sample.filesize }}</p>
+                </div>
+            </div>
+            <div>
+                <a href="{{ sample.path }}" class="btn btn-light me-2">
+                    <i class="fas fa-download btn-icon"></i> Download
+                </a>
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" style="display: inline;">
+                    <input type="hidden" name="sample_file" value="{{ sample.filename }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-cogs btn-icon"></i> Verarbeiten
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Derzeit sind keine Beispieldateien vorhanden.
+        </div>
+    {% endif %}
+</div>
+
+<div class="model-card mt-4">
+    <div class="model-header">
+        <div class="model-info">
+            <div class="model-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="model-details">
+                <h3>Über IFC-Dateien</h3>
+                <p>Informationen zum Industry Foundation Classes (IFC) Format</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <p>
+            Die Industry Foundation Classes (IFC) sind ein offenes Dateiformat, das für den Austausch von BIM-Modellen (Building Information Modeling) zwischen verschiedenen Softwareanwendungen verwendet wird.
+        </p>
+        
+        <h5 class="mt-4">Wichtige Merkmale des IFC-Formats:</h5>
+        <ul>
+            <li>Standardisierte Beschreibung von Gebäudeteilen und ihren Beziehungen</li>
+            <li>Herstellerunabhängiges Format, unterstützt von vielen BIM-Anwendungen</li>
+            <li>Hierarchische Strukturierung von Gebäudekomponenten</li>
+            <li>Unterstützung für Geometrie, Materialien, Eigenschaften und Relationen</li>
+            <li>Kann HVAC-Komponenten und deren technische Eigenschaften enthalten</li>
+        </ul>
+        
+        <h5 class="mt-4">Unterstützte IFC-Versionen:</h5>
+        <p>
+            Diese Anwendung unterstützt IFC-Dateien in den Versionen IFC2x3 und IFC4. Ältere Versionen können möglicherweise nicht alle Funktionen unterstützen.
+        </p>
+    </div>
+</div>
+{% endblock %}
