@@ -9,6 +9,7 @@ import ifcopenshell
 from flask import Flask, request, render_template, jsonify, send_from_directory, flash, redirect, url_for
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from flask_migrate import Migrate
 
 # Import der eigenen Module
 from models import db, IFCModel, HVACComponent, Location, ClassificationMapping, DistributionSystem
@@ -33,6 +34,7 @@ app.secret_key = "hvac-classifier-secret-key"  # Für Flash-Nachrichten
 
 # Datenbank initialisieren
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # Verzeichnisse
 UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
