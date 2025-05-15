@@ -1,6 +1,8 @@
 # Grundlegende Bibliotheken
 Flask==2.2.3
 Flask-SQLAlchemy==3.0.3
+Flask_Migrate
+Flask-Session 
 Werkzeug==2.2.3
 Jinja2==3.1.2
 

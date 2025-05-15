@@ -1,242 +1,472 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HVAC-Classifier | Intelligent BIM Classification</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
-</head>
-<body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <a href="{{ url_for('index') }}" class="sidebar-logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-fan"></i>
-                    </div>
-                    <span>HVAC-Classifier</span>
-                </a>
-            </div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="{{ url_for('index') }}" class="nav-link {{ 'active' if request.endpoint == 'index' else '' }}">
-                        <i class="fas fa-tachometer-alt nav-icon"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                        <i class="fas fa-upload nav-icon"></i>
-                        <span>Modell hochladen</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ url_for('list_samples') }}" class="nav-link {{ 'active' if request.endpoint == 'list_samples' else '' }}">
-                        <i class="fas fa-file-alt nav-icon"></i>
-                        <span>Beispieldateien</span>
-                    </a>
-                </li>
-                {% if model %}
-                <li class="nav-item">
-                    <a href="{{ url_for('view_model', model_id=model.id) }}" class="nav-link {{ 'active' if request.endpoint == 'view_model' else '' }}">
-                        <i class="fas fa-cubes nav-icon"></i>
-                        <span>Aktuelles Modell</span>
-                    </a>
-                </li>
-                {% endif %}
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#convertModal">
-                        <i class="fas fa-exchange-alt nav-icon"></i>
-                        <span>BAS-Code Konverter</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#helpModal">
-                        <i class="fas fa-question-circle nav-icon"></i>
-                        <span>Hilfe / About</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} alert-icon"></i>
-                                <div>
-                                    {{ message }}
-                                </div>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            
-            <!-- Page Header -->
-            <div class="page-header">
-                <h1 class="page-title">{{ page_title|default('HVAC-Classifier') }}</h1>
-                
-                {% if page_actions %}
-                    <div class="page-actions">
-                        {{ page_actions|safe }}
-                    </div>
-                {% endif %}
-            </div>
-            
-            <!-- Page Content -->
-            {% block content %}{% endblock %}
-        </div>
-    </div>
-    
-    <!-- Upload Modal -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="uploadModalLabel">
-                        <i class="fas fa-upload me-2"></i> IFC-Datei hochladen
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="fileInput" class="form-label">IFC-Datei auswählen</label>
-                            <input class="form-control" type="file" id="fileInput" name="file" accept=".ifc" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="standardSelect" class="form-label">BAS-Standard</label>
-                            <select class="form-select" id="standardSelect" name="standard">
-                                <option value="amev" selected>AMEV</option>
-                                <option value="vdi">VDI 3814</option>
-                            </select>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="electronicOnlyCheck" name="electronic_only" value="true" checked>
-                            <label class="form-check-label" for="electronicOnlyCheck">
-                                Nur elektronisch gesteuerte Elemente berücksichtigen
-                            </label>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Abbrechen</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-upload me-2"></i> Hochladen und klassifizieren
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Convert Modal -->
-    <div class="modal fade" id="convertModal" tabindex="-1" aria-labelledby="convertModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="convertModalLabel">
-                        <i class="fas fa-exchange-alt me-2"></i> BAS-Code Konverter
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="fromStandardSelect" class="form-label">Von Standard</label>
-                        <select class="form-select" id="fromStandardSelect">
-                            <option value="amev" selected>AMEV</option>
-                            <option value="vdi">VDI 3814</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="toStandardSelect" class="form-label">Zu Standard</label>
-                        <select class="form-select" id="toStandardSelect">
-                            <option value="amev">AMEV</option>
-                            <option value="vdi" selected>VDI 3814</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="codeInput" class="form-label">BAS-Code</label>
-                        <input type="text" class="form-control" id="codeInput" placeholder="BAS-Code eingeben...">
-                    </div>
-                    <div class="mb-3">
-                        <label for="convertedCodeOutput" class="form-label">Konvertierter Code</label>
-                        <input type="text" class="form-control" id="convertedCodeOutput" readonly>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Schließen</button>
-                    <button type="button" class="btn btn-primary" id="convertButton">
-                        <i class="fas fa-exchange-alt me-2"></i> Konvertieren
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Help Modal -->
-    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="helpModalLabel">
-                        <i class="fas fa-question-circle me-2"></i> Hilfe & Über
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h4>HVAC-Classifier Version 1.0</h4>
-                    <p>
-                        HVAC-Classifier ist ein Tool zur automatischen Klassifizierung von HVAC-Komponenten (Heizung, Lüftung, Klimatechnik) 
-                        in IFC-Dateien nach BAS-Standards (Building Automation System). Die Anwendung extrahiert relevante Informationen 
-                        aus BIM-Modellen und generiert standardisierte BAS-Codes nach AMEV oder VDI 3814.
-                    </p>
-                    
-                    <h5 class="mt-4">Funktionen</h5>
-                    <ul>
-                        <li>Extraktion von HVAC-Komponenten aus IFC-Dateien</li>
-                        <li>Identifizierung elektronisch gesteuerter Komponenten</li>
-                        <li>Klassifizierung nach BAS-Standards</li>
-                        <li>Standortbezogene Klassifizierung (Berücksichtigung von Stockwerk und Raum)</li>
-                        <li>REST-API für Integration in andere Systeme</li>
-                    </ul>
-                    
-                    <h5 class="mt-4">Verwendung</h5>
-                    <ol>
-                        <li>Lade eine IFC-Datei über den "Modell hochladen" Button hoch</li>
-                        <li>Wähle den gewünschten BAS-Standard (AMEV oder VDI)</li>
-                        <li>Entscheide, ob nur elektronisch gesteuerte Elemente berücksichtigt werden sollen</li>
-                        <li>Starte die Klassifizierung</li>
-                        <li>Die Ergebnisse werden dann in einer übersichtlichen Tabelle dargestellt</li>
-                    </ol>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Verstanden</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- JavaScript Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+{% extends "base.html" %}
 
-    <!-- Custom JavaScript -->
-    <script src="{{ url_for('static', filename='javascripts/index.js') }}"></script>
-</body>
-</html>
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">HVAC-Classifier</h1>
+        <p class="hero-subtitle">Intelligente Klassifizierung von HVAC-Komponenten für BIM-Modelle</p>
+        <button class="btn btn-primary btn-lg mt-3 upload-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            <i class="fas fa-upload me-2"></i> IFC-Datei hochladen
+        </button>
+    </div>
+</div>
+
+<!-- Dashboard Content -->
+<div class="container-fluid dashboard-container mt-4">
+    <div class="row">
+        <!-- Statistics Cards -->
+        <div class="col-lg-4">
+            <div class="stat-card primary-card">
+                <div class="stat-icon">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value">{{ statistics.models_count|default(0) }}</h3>
+                    <p class="stat-label">Verarbeitete Modelle</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="stat-card success-card">
+                <div class="stat-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value">{{ statistics.components_count|default(0) }}</h3>
+                    <p class="stat-label">Klassifizierte Komponenten</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="stat-card info-card">
+                <div class="stat-icon">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value">{{ statistics.electronic_percentage|default(0) }}%</h3>
+                    <p class="stat-label">Elektronische Komponenten</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Session Files -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card session-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i> Aktuelle Sitzung
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if session_files %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Dateiname</th>
+                                        <th>Verarbeitet am</th>
+                                        <th>Komponenten</th>
+                                        <th>Standard</th>
+                                        <th>Aktion</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in session_files %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-file-alt text-primary me-2"></i>
+                                            <strong>{{ file.filename }}</strong>
+                                        </td>
+                                        <td>{{ file.processed_at }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ file.component_count }} Komponenten</span>
+                                            <span class="badge bg-success ms-1">{{ file.electronic_count }} Elektronisch</span>
+                                        </td>
+                                        <td><span class="badge bg-info">{{ file.standard|upper }}</span></td>
+                                        <td>
+                                            <a href="{{ url_for('view_model', model_id=file.id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> Ansehen
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-file-upload"></i>
+                            </div>
+                            <p>Noch keine Dateien in dieser Sitzung verarbeitet</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="fas fa-upload me-2"></i> IFC-Datei hochladen
+                            </button>
+                            <p class="mt-3 text-muted">oder wähle eine der Beispieldateien unten</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Ausgabe (nur temporär) -->
+<div class="card mt-3">
+    <div class="card-header bg-warning">Debug-Informationen</div>
+    <div class="card-body">
+        <h5>Session Files:</h5>
+        <pre>{{ session_files|tojson(indent=2) }}</pre>
+        
+        <h5>Session Data:</h5>
+        <pre>{{ session|tojson(indent=2) }}</pre>
+    </div>
+</div>
+
+    <!-- Sample Files Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i> Beispieldateien
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for sample in samples %}
+                        <div class="col-md-4 mb-3">
+                            <div class="sample-card">
+                                <div class="sample-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="sample-details">
+                                    <h5>{{ sample.filename }}</h5>
+                                    <p>{{ sample.filesize }}</p>
+                                    <div class="sample-actions">
+                                        <a href="{{ sample.path }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-download me-1"></i> Download
+                                        </a>
+                                        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="d-inline">
+                                            <input type="hidden" name="sample_file" value="{{ sample.filename }}">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-cogs me-1"></i> Verarbeiten
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% if not samples %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Derzeit sind keine Beispieldateien verfügbar.
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Guide -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i> Schnellhilfe
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="quick-guide-item">
+                                <div class="guide-step">1</div>
+                                <div class="guide-content">
+                                    <h5>IFC-Datei hochladen</h5>
+                                    <p>Laden Sie eine IFC-Datei hoch oder wählen Sie eine der bereitgestellten Beispieldateien aus.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="quick-guide-item">
+                                <div class="guide-step">2</div>
+                                <div class="guide-content">
+                                    <h5>Klassifizierung prüfen</h5>
+                                    <p>Sehen Sie die automatisch klassifizierten HVAC-Komponenten und ihre BAS-Codes ein.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="quick-guide-item">
+                                <div class="guide-step">3</div>
+                                <div class="guide-content">
+                                    <h5>Ergebnisse exportieren</h5>
+                                    <p>Exportieren Sie die Klassifizierungsergebnisse in verschiedenen Formaten (CSV, JSON, Excel).</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(120deg, var(--primary-dark) 0%, var(--secondary-color) 100%);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 60px 40px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .upload-btn {
+        padding: 12px 30px;
+        font-size: 1rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border-radius: var(--border-radius);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+
+    .primary-card {
+        background: linear-gradient(45deg, #4361ee, #4895ef);
+    }
+
+    .success-card {
+        background: linear-gradient(45deg, #06d6a0, #1b9aaa);
+    }
+
+    .info-card {
+        background: linear-gradient(45deg, #3a86ff, #4361ee);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-right: 20px;
+        opacity: 0.8;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .stat-label {
+        margin: 0;
+        opacity: 0.9;
+    }
+
+    /* Session Card */
+    .session-card {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        border: none;
+    }
+
+    .session-card .card-header {
+        background-color: white;
+        border-bottom: 1px solid var(--gray-200);
+        padding: 15px 20px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--gray-300);
+        margin-bottom: 20px;
+    }
+
+    /* Sample Cards */
+    .sample-card {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        background-color: white;
+        border: 1px solid var(--gray-200);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+
+    .sample-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: var(--primary-color);
+    }
+
+    .sample-icon {
+        width: 50px;
+        height: 50px;
+        background-color: var(--primary-light);
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-right: 15px;
+    }
+
+    .sample-details {
+        flex: 1;
+    }
+
+    .sample-details h5 {
+        font-size: 16px;
+        margin: 0 0 5px 0;
+        font-weight: 500;
+    }
+
+    .sample-details p {
+        font-size: 13px;
+        color: var(--gray-600);
+        margin: 0 0 10px 0;
+    }
+
+    .sample-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    /* Quick Guide */
+    .quick-guide-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .guide-step {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+
+    .guide-content h5 {
+        font-size: 16px;
+        margin: 0 0 5px 0;
+    }
+
+    .guide-content p {
+        font-size: 14px;
+        color: var(--gray-600);
+        margin: 0;
+    }
+
+    /* Responsive Fixes */
+    @media (max-width: 992px) {
+        .hero-section {
+            padding: 40px 20px;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stat-card {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation für die Stat-Cards
+    document.querySelectorAll('.stat-card').forEach(function(card) {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 6px 15px rgba(0,0,0,0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
+        });
+    });
+    
+    // Animation für Upload-Button
+    const uploadBtn = document.querySelector('.upload-btn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+        });
+        
+        uploadBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+        });
+    }
+});
+</script>
+{% endblock %}

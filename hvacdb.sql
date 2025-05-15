@@ -1,5 +1,5 @@
 """
-Angepasste SQL-Struktur mit zusätzlichen Tabellen für Standorte und BAS-Codes
+Angepasste SQL-Struktur mit zusätzlichen Tabellen für Standorte, BAS-Codes und Sessions
 """
 
 -- Tabelle für IFC-Modelle
@@ -52,10 +52,18 @@ CREATE TABLE hvac_components (
   location_id INTEGER REFERENCES locations(id) ON DELETE SET NULL
 );
 
+-- Tabelle für Flask-Sessions
+CREATE TABLE flask_sessions (
+  id VARCHAR(255) NOT NULL PRIMARY KEY,
+  session_data BYTEA NOT NULL,
+  expiry TIMESTAMP(6) WITHOUT TIME ZONE NOT NULL
+);
+
 -- Indizes für schnellere Abfragen
 CREATE INDEX idx_hvac_components_model_id ON hvac_components(model_id);
 CREATE INDEX idx_hvac_components_is_electronic ON hvac_components(is_electronic);
 CREATE INDEX idx_hvac_components_ifc_class ON hvac_components(ifc_class);
+CREATE INDEX idx_flask_sessions_expiry ON flask_sessions(expiry);
 
 -- Standard-Kategoriemappings einfügen
 INSERT INTO classification_mappings (ifc_class, predefined_type, target_category, bac_twin_code, amev_code)
