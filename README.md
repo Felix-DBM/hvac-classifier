@@ -1,10 +1,6 @@
-"""
-Aktualisierte README.md mit neuen Funktionen und Strukturinformationen
-"""
-
 # HVAC Classifier
 
-**Prototyp zur automatischen Kategorisierung von HVAC-Komponenten in BIM-Modellen**
+**Webbasierter Prototyp zur automatisierten Kategorisierung von HVAC-Komponenten in BIM-Modellen (IFC)**
 
 ---
 
@@ -24,152 +20,80 @@ Aktualisierte README.md mit neuen Funktionen und Strukturinformationen
 
 ## Projektübersicht
 
-In diesem Projekt wird ein Prototyp entwickelt, der **HVAC-Komponenten** (Heizung, Lüftung, Klima) in digitalen Bauwerksmodellen automatisch erkennt und gemäß den deutschen Standards **BACTwin** und **AMEV** kategorisiert. Durch die Automatisierung wird der manuelle Aufwand minimiert, Fehlerraten reduziert und eine einheitliche Klassifizierung sichergestellt.
+HVAC Classifier ist ein auf Flask basierender Webprototyp zur **automatischen Klassifikation von Komponenten der technischen Gebäudeausrüstung (TGA)** in BIM-Modellen (IFC). Ziel ist es, die manuelle Zuordnung gemäß **BACTwin** und **AMEV**-Standards zu automatisieren, um die Datenqualität in digitalen Zwillingen zu erhöhen.
+
+---
 
 ## Hauptfunktionen
 
-* **IFC-Import**: Einlesen und Verarbeiten von BIM-Modellen im IFC-Format
-* **Standorterkennung**: Automatische Extraktion von Stockwerk- und Rauminformationen
-* **Erkennung**: Identifikation relevanter HVAC-Elemente (z. B. Luftauslässe, Heizkörper, Ventile)
-* **Elektronik-Erkennung**: Identifikation elektronisch gesteuerter Komponenten
-* **Klassifizierung**: Zuordnung gemäß BACTwin- und AMEV-Standard mit integrierter Standortinformation im BAS-Code
-* **Dual-Ansicht**: Darstellung der Ergebnisse als Baumstruktur und Tabelle
-* **Ausgabeoptionen**: Ergebnisse wahlweise in der Konsole oder in einer Weboberfläche (Flask)
+- 🔍 **IFC-Import**: Verarbeitung und Visualisierung von BIM-Modellen im IFC-Format
+- 🧠 **Klassifikation**: Regelbasierte Zuordnung von HVAC-Komponenten gemäß BAS-Standards
+- 📌 **Positionsanalyse**: Raum- und Standorterkennung auf Basis von IFC-Geometrie
+- 🌐 **Webinterface**: Benutzerfreundliche Oberfläche für Upload, Kontrolle und Export
+- 🗃️ **Datenbank**: Speicherung aller Ergebnisse (SQLAlchemy, SQLite/PostgreSQL)
+- 🧾 **Export**: Ergebnisse als Excel oder JSON-Datei verfügbar
+
+---
 
 ## Voraussetzungen
 
-* **Python** 3.8 oder neuer
-* **PostgreSQL** Datenbank
-* **ifcopenshell** zum Parsen von IFC-Dateien
-* **Flask** für die Weboberfläche
+- Python 3.10+
+- pip / venv
+- Abhängigkeiten aus `requirements.txt`
+
+---
 
 ## Installation
 
-Führe folgende Schritte aus, um das Projekt auf deinem System einzurichten:
-
-1. **Repository klonen**
-
-   ```bash
-   git clone https://github.com/dein-user/hvac-classifier.git
-   cd hvac-classifier
-   ```
-2. **Virtuelle Umgebung erstellen und aktivieren**
-
-   ```bash
-   python -m venv venv
-   # Windows
-   venv\Scripts\activate
-   # macOS/Linux
-   source venv/bin/activate
-   ```
-3. **Abhängigkeiten installieren**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Umgebungsvariablen konfigurieren**
-
-   Erstelle eine `.env`-Datei im Hauptverzeichnis:
-   ```
-   DATABASE_URL=postgresql://username:password@localhost:5432/hvacdb
-   FLASK_APP=main.py
-   FLASK_ENV=development
-   ```
-
-5. **Datenbank initialisieren**
-
-   ```bash
-   # PostgreSQL-Datenbank erstellen
-   createdb hvacdb
-   
-   # Schema anwenden
-   psql -d hvacdb -f hvacdb.sql
-   ```
-
-## Projektstruktur
-
-```
-hvac-classifier/
-│
-├── main.py                     # Hauptskript und Flask-Anwendung
-├── config.py                   # Konfigurationseinstellungen
-├── models.py                   # SQLAlchemy-Datenbankmodelle
-├── hvacdb.sql                  # SQL-Schema für die Datenbank
-│
-├── classifier/                 # Klassifizierungsmodule
-│   ├── hvac_rules.py           # Definition der Klassifizierungsregeln
-│   ├── location_extractor.py   # Extraktion von Standortinformationen
-│   ├── hvac_extractor.py       # Extraktion von HVAC-Komponenten
-│   └── bas_converter.py        # Konvertierung zwischen BAS-Standards
-│
-├── samples/                    # Beispiel-IFC-Dateien
-│   └── test_model.ifc          # Beispielhafte IFC-Datei
-│
-├── templates/                  # HTML-Templates
-│   ├── index.html              # Hauptseite
-│   ├── model_details.html      # Modelldetailansicht
-│   └── component_details.html  # Komponentendetailansicht
-│
-├── static/                     # Statische Dateien
-│   ├── style.css               # CSS-Styles
-│   └── javascripts/            # JavaScript-Dateien
-│       └── index.js            # Hauptscript für die Weboberfläche
-│
-├── uploads/                    # Verzeichnis für hochgeladene Dateien
-├── venv/                       # Virtuelle Python-Umgebung (ignoriert)
-├── requirements.txt            # Python-Abhängigkeiten
-└── README.md                   # Diese Projektbeschreibung
-```
-
-## Erste Schritte
-
-### 1. Testlauf in der Konsole
-
 ```bash
-python main.py samples/test_model.ifc
-```
+# Projekt klonen
+git clone <repo-url>
+cd hvac-classifier
 
-Dies verarbeitet die Datei `samples/test_model.ifc` und gibt erkannte HVAC-Elemente in der Konsole aus.
+# Virtuelle Umgebung erstellen und aktivieren
+python -m venv venv
+source venv/bin/activate  # oder venv\Scripts\activate auf Windows
 
-### 2. Weboberfläche starten
+# Abhängigkeiten installieren
+pip install -r requirements.txt
 
-```bash
-python main.py
-```
+# Datenbank initialisieren
+flask db upgrade
 
-Öffne dann deinen Browser unter `http://127.0.0.1:5000`, um die Weboberfläche zu nutzen.
+# Projektstruktur
+├── main.py                  # Einstiegspunkt, Flask-Server
+├── config.py                # Konfigurationen
+├── models.py                # SQLAlchemy-Datenbankmodelle
+├── classifier/              # HVAC Klassifikationslogik
+│   ├── hvac_rules.py        # Regelbasierte Zuordnung
+│   ├── hvac_extractor.py    # IFC-Elementextraktion
+│   ├── location_extractor.py# Raum- und Bereichserkennung
+│   └── bas_converter.py     # Export in BAS-Formate
+├── web_interface/           # HTML-Templates und Static Files
+├── uploads/                 # Benutzeruploads
+├── samples/                 # Beispiel-IFC-Dateien
+├── hvacdb.sql               # Beispieldatenbank (optional)
+├── requirements.txt         # Python-Abhängigkeiten
+└── README.md                # Diese Datei
 
-## Architektur
+# Erste Schritte
+1. Starte den Server:
+   python main.py
+2. Öffne http://localhost:5000 im Browser
+3. Lade ein IFC-Modell hoch, klassifiziere HVAC-Elemente und exportiere das Ergebnis.
 
-Das Projekt verwendet eine modulare Architektur mit folgenden Hauptkomponenten:
+# Architektur
+- Flask als leichtgewichtiges Webframework
+- ifcopenshell zur Verarbeitung von IFC-Daten
+- SQLAlchemy als ORM für relationale Speicherung
+- Jinja2 Templates für Web-UI
+- Regelbasierte Klassifikation via JSON-Regelsätze
 
-1. **LocationExtractor**: Extrahiert Standortinformationen (Stockwerk, Raum) aus IFC-Dateien.
-2. **HVACExtractor**: Identifiziert HVAC-Komponenten und deren Eigenschaften in IFC-Dateien.
-3. **HVACClassifier**: Klassifiziert HVAC-Komponenten nach BACTwin und AMEV-Standards.
-4. **BASConverter**: Konvertiert zwischen verschiedenen BAS-Code-Standards.
+# Roadmap
+ - Modell-gestützte Klassifikation (ML)
+ - Mehrsprachigkeit (DE/EN)
+ - Unterstützung weiterer IFC-Versionen
+ - Cloud-Upload-Optionen
 
-Die Datenbank besteht aus folgenden Tabellen:
-- `ifc_models`: Importierte IFC-Modelle
-- `locations`: Standortinformationen (Stockwerk, Raum)
-- `hvac_components`: HVAC-Komponenten mit Eigenschaften und Klassifizierung
-- `distribution_systems`: Versorgungs- und Verteilungssysteme
-- `classification_mappings`: Zuordnungen zwischen IFC-Klassen und Kategorien
-
-Die Weboberfläche bietet:
-- Upload und Verarbeitung von IFC-Dateien
-- Ansicht als Baumstruktur oder Tabelle
-- Detailansicht von Komponenten
-- Filterung nach elektronisch gesteuerten Elementen
-- Export von Klassifizierungsergebnissen
-
-## Roadmap
-
-* **Machine-Learning-Erweiterung**: Automatisierte Klassifizierung basierend auf neuronalen Netzen
-* **Unterstützung zusätzlicher Formate**: Revit, ArchiCAD, .rvt, .pln
-* **3D-Visualisierung**: Integration mit three.js oder xeokit
-* **Testautomatisierung und CI/CD**: GitHub Actions für Qualitätssicherung
-* **BACnet-Integration**: Anbindung an Gebäudeautomationssysteme
-
-## Lizenz
-
-Dieses Projekt steht unter der [MIT License](LICENSE). Alle Beiträge sind willkommen — bitte befolge die geltenden Lizenzrichtlinien.
+# Lizenz 
+Dieses Projekt steht unter MIT-Lizenz. Details siehe LICENSE-Datei.
