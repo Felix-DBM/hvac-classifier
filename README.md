@@ -66,20 +66,22 @@ flask db upgrade
 
 ## Projektstruktur
 
-├── main.py                  # Einstiegspunkt, Flask-Server
-├── config.py                # Konfigurationen
-├── models.py                # SQLAlchemy-Datenbankmodelle
-├── classifier/              # HVAC Klassifikationslogik
-│   ├── hvac_rules.py        # Regelbasierte Zuordnung
-│   ├── hvac_extractor.py    # IFC-Elementextraktion
-│   ├── location_extractor.py# Raum- und Bereichserkennung
-│   └── bas_converter.py     # Export in BAS-Formate
-├── web_interface/           # HTML-Templates und Static Files
-├── uploads/                 # Benutzeruploads
-├── samples/                 # Beispiel-IFC-Dateien
-├── hvacdb.sql               # Beispieldatenbank (optional)
-├── requirements.txt         # Python-Abhängigkeiten
-└── README.md                # Diese Datei
+```text
+├── main.py                  # Einstiegspunkt, Flask-Server  
+├── config.py                # Konfigurationen  
+├── models.py                # SQLAlchemy-Datenbankmodelle  
+├── classifier/              # HVAC Klassifikationslogik  
+│   ├── hvac_rules.py        # Regelbasierte Zuordnung  
+│   ├── hvac_extractor.py    # IFC-Elementextraktion  
+│   ├── location_extractor.py# Raum- und Bereichserkennung  
+│   └── bas_converter.py     # Export in BAS-Formate  
+├── web_interface/           # HTML-Templates und Static Files  
+├── uploads/                 # Benutzeruploads  
+├── samples/                 # Beispiel-IFC-Dateien  
+├── hvacdb.sql               # Beispieldatenbank (optional)  
+├── requirements.txt         # Python-Abhängigkeiten  
+└── README.md                # Diese Datei  
+```
 
 ---
 
