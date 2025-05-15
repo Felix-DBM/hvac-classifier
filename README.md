@@ -60,7 +60,12 @@ pip install -r requirements.txt
 # Datenbank initialisieren
 flask db upgrade
 
-# Projektstruktur
+```
+
+---
+
+## Projektstruktur
+
 ├── main.py                  # Einstiegspunkt, Flask-Server
 ├── config.py                # Konfigurationen
 ├── models.py                # SQLAlchemy-Datenbankmodelle
@@ -76,11 +81,15 @@ flask db upgrade
 ├── requirements.txt         # Python-Abhängigkeiten
 └── README.md                # Diese Datei
 
+---
+
 # Erste Schritte
 1. Starte den Server:
    python main.py
 2. Öffne http://localhost:5000 im Browser
 3. Lade ein IFC-Modell hoch, klassifiziere HVAC-Elemente und exportiere das Ergebnis.
+
+---
 
 # Architektur
 - Flask als leichtgewichtiges Webframework
@@ -89,11 +98,15 @@ flask db upgrade
 - Jinja2 Templates für Web-UI
 - Regelbasierte Klassifikation via JSON-Regelsätze
 
+---
+
 # Roadmap
  - Modell-gestützte Klassifikation (ML)
  - Mehrsprachigkeit (DE/EN)
  - Unterstützung weiterer IFC-Versionen
  - Cloud-Upload-Optionen
+
+---
 
 # Lizenz 
 Dieses Projekt steht unter MIT-Lizenz. Details siehe LICENSE-Datei.
