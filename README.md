@@ -37,7 +37,7 @@ HVAC Classifier ist ein auf Flask basierender Webprototyp zur **automatischen Kl
 
 ## Voraussetzungen
 
-- Python 3.10+
+- Python 3.10 oder 3.11
 - pip / venv
 - Abhängigkeiten aus `requirements.txt`
 
@@ -47,7 +47,7 @@ HVAC Classifier ist ein auf Flask basierender Webprototyp zur **automatischen Kl
 
 ```bash
 # Projekt klonen
-git clone <repo-url>
+git clone https://github.com/Awoladi/hvac-classifier
 cd hvac-classifier
 
 # Virtuelle Umgebung erstellen und aktivieren
