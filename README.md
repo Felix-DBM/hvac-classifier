@@ -57,7 +57,22 @@ source venv/bin/activate  # oder venv\Scripts\activate auf Windows
 # Abhängigkeiten installieren
 pip install -r requirements.txt
 
-# Datenbank initialisieren
+#Datenbankverwaltung öffnen
+psql -U postgres
+
+#sollte bei Windows eine Warnugn kommen wegen des Console code page, dann kann es mit "chcp 1252" geändert werden, wobei die Zahl das page angibt und geändert werden kann
+
+#Datenbank über Datenbankverwaltung erstellen
+CREATE DATABASE hvacdb;
+
+#User in Datenbankwerwaltung erstellen
+CREATE USER hvac_user WITH PASSWORD 'unser Passwort'; #unser Passwort sollte 'M31052003w' sein
+
+#Berechtigungen in der Datenbankverwaltung für die Datenbank erteilen 
+GRANT ALL PRIVILEGES ON DATABASE hvacdb TO hvac_user;
+GRANT ALL PRIVILEGES ON SCHEMA public TO hvac_user;
+
+# Datenbank initialisieren/upgraden
 flask db upgrade
 
 ```
