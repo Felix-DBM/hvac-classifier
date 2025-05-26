@@ -10,11 +10,12 @@
 2. [Hauptfunktionen](#hauptfunktionen)
 3. [Voraussetzungen](#voraussetzungen)
 4. [Installation](#installation)
-5. [Projektstruktur](#projektstruktur)
-6. [Erste Schritte](#erste-schritte)
-7. [Architektur](#architektur)
-8. [Roadmap](#roadmap)
-9. [Lizenz](#lizenz)
+5. [Projektübersicht](#projektübersicht)
+6. [Programm starten](#programm-starten)
+7. [Erste Schritte](#erste-schritte)
+8. [Architektur](#architektur)
+9. [Roadmap](#roadmap)
+10. [Lizenz](#lizenz)
 
 ---
 
