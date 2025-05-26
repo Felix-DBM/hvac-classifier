@@ -88,6 +88,7 @@ flask db upgrade
 ---
 
 ## Programm starten
+#Beachte, dass das virtuelle Environment gestartet sein muss
 ```bash
 flask --app main run
 ```
