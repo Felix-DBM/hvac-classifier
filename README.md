@@ -45,25 +45,32 @@ HVAC Classifier ist ein auf Flask basierender Webprototyp zur **automatischen Kl
 
 ## Installation
 
-```bash
-# Projekt klonen
-git clone https://github.com/Awoladi/hvac-classifier
-cd hvac-classifier
 
-# Virtuelle Umgebung erstellen und aktivieren
+Projekt klonen
+```bash
+git clone https://github.com/Awoladi/hvac-classifier
+```
+In der Ordnerstruktur in den hvac-classivier wechseln
+```bash
+cd hvac-classifier
+```
+Virtuelle Umgebung erstellen und aktivieren
+```bash
 python -m venv venv
 source venv/bin/activate  # oder venv\Scripts\activate auf Windows
-
-# Abhängigkeiten installieren
-pip install -r requirements.txt
-
 ```
+Abhängigkeiten installieren
 ```bash
-#Datenbankverwaltung öffnen
+pip install -r requirements.txt
+```
+Datenbankverwaltung öffnen
+```bash
 psql -U postgres
+```
+#sollte bei Windows eine Warnugn wegen des Console code page kommen, dann kann die Datenbankverwaltung mit "\q" verlassen werden und mit "chcp 1252" geändert werden, wobei die Zahl das page angibt und geändert werden kann.
 
-#sollte bei Windows eine Warnugn kommen wegen des Console code page, dann kann es mit "chcp 1252" geändert werden, wobei die Zahl das page angibt und geändert werden kann
-
+Datenbank erstellen und verwalten
+```bash
 #Datenbank über Datenbankverwaltung erstellen
 CREATE DATABASE hvacdb;
 
@@ -73,7 +80,8 @@ CREATE USER hvac_user WITH PASSWORD 'unser Passwort'; #unser Passwort sollte 'M3
 #Berechtigungen in der Datenbankverwaltung für die Datenbank erteilen 
 GRANT ALL PRIVILEGES ON DATABASE hvacdb TO hvac_user;
 GRANT ALL PRIVILEGES ON SCHEMA public TO hvac_user;
-
+```
+```bash
 # Datenbank initialisieren/upgraden
 flask db upgrade
 
