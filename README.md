@@ -84,9 +84,13 @@ GRANT ALL PRIVILEGES ON SCHEMA public TO hvac_user;
 ```bash
 # Datenbank initialisieren/upgraden
 flask db upgrade
-
 ```
+---
 
+## Programm starten
+```bash
+flask --app main run
+```
 ---
 
 ## Projektstruktur
