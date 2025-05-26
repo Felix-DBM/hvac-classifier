@@ -57,6 +57,8 @@ source venv/bin/activate  # oder venv\Scripts\activate auf Windows
 # Abhängigkeiten installieren
 pip install -r requirements.txt
 
+```
+```bash
 #Datenbankverwaltung öffnen
 psql -U postgres
 
