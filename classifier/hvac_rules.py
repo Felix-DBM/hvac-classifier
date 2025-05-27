@@ -224,7 +224,7 @@ class HVACClassifier:
             "hierarchy": hierarchy
         }
     
-    def classify_element(self, element, standard="amev", electronic_only=True):
+    def classify_element(self, element, standard="amev", electronic_only=False):
         """
         Klassifiziert ein einzelnes HVAC-Element
         
