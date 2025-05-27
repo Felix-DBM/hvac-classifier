@@ -6,6 +6,14 @@ Extrahiert HVAC-Komponenten aus IFC-Dateien
 import ifcopenshell
 import re
 
+def ifc_type_exists(ifc_file, type_name):
+    try:
+        _ = ifc_file.by_type(type_name)
+        return True
+    except:
+        return False
+
+
 # Sicheres Laden von IFC-Typen (Schema-agnostisch)
 def safe_by_type(ifc_file, type_name):
     try:
@@ -28,8 +36,9 @@ class HVACExtractor:
         """
         self.ifc_file = ifc_file
         
+
         # HVAC-relevante IFC-Typen
-        self.hvac_types = [
+        self.hvac_types_all = [
             'IfcDuctSegment',            # Luftkanalabschnitt
             'IfcPipeSegment',            # Rohrabschnitt
             'IfcDuctFitting',            # Luftkanalverbindungsstück
@@ -66,6 +75,9 @@ class HVACExtractor:
             'IfcDistributionElement',    # Allgemeine Versorgungselemente
             'IfcDistributionControlElement' # Steuerelemente für Versorgungssysteme
         ]
+
+        # Hier den Filter anwenden
+        self.hvac_types = [t for t in self.hvac_types_all if ifc_type_exists(self.ifc_file, t)]
 
         
         # Suchbegriffe für elektronisch gesteuerte Elemente

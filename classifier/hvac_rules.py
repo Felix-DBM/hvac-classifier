@@ -7,6 +7,14 @@ import re
 import os
 import json
 
+def ifc_type_exists(ifc_file, type_name):
+    try:
+        _ = ifc_file.by_type(type_name)
+        return True
+    except:
+        return False
+
+
 # Sicheres Laden von IFC-Typen (Schema-agnostisch)
 def safe_by_type(ifc_file, type_name):
     try:
@@ -34,7 +42,7 @@ class HVACClassifier:
         self.rules = self._load_rules(rules_file)
         
         # HVAC-spezifische IFC-Typen
-        self.hvac_types = [
+        self.hvac_types_all = [
             'IfcDuctSegment',            # Luftkanalabschnitt
             'IfcPipeSegment',            # Rohrabschnitt
             'IfcDuctFitting',            # Luftkanalverbindungsstück
@@ -71,6 +79,8 @@ class HVACClassifier:
             'IfcDistributionElement',    # Allgemeine Versorgungselemente
             'IfcDistributionControlElement' # Steuerelemente für Versorgungssysteme
         ]
+
+        self.hvac_types = [t for t in self.hvac_types_all if ifc_type_exists(self.ifc_file, t)]
 
         
         # Elektronisch gesteuerte Komponenten-Typen
