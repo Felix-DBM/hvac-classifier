@@ -7,6 +7,13 @@ import re
 import os
 import json
 
+# Sicheres Laden von IFC-Typen (Schema-agnostisch)
+def safe_by_type(ifc_file, type_name):
+    try:
+        return ifc_file.by_type(type_name)
+    except Exception:
+        return []
+
 class HVACClassifier:
     """
     Hauptklasse zur Klassifizierung von HVAC-Komponenten in IFC-Dateien
@@ -172,7 +179,7 @@ class HVACClassifier:
         
         # Alle HVAC-Elemententypen durchgehen
         for element_type in self.hvac_types:
-            elements = self.ifc_file.by_type(element_type)
+            elements = safe_by_type(self.ifc_file, element_type)
             for element in elements:
                 # Element klassifizieren
                 result = self.classify_element(element, standard, electronic_only)

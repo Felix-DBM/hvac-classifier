@@ -6,6 +6,13 @@ Extrahiert HVAC-Komponenten aus IFC-Dateien
 import ifcopenshell
 import re
 
+# Sicheres Laden von IFC-Typen (Schema-agnostisch)
+def safe_by_type(ifc_file, type_name):
+    try:
+        return ifc_file.by_type(type_name)
+    except Exception:
+        return []
+
 class HVACExtractor:
     """
     Klasse zum Extrahieren von HVAC-Komponenten aus IFC-Dateien.
@@ -63,7 +70,7 @@ class HVACExtractor:
         
         # Durchlaufe alle HVAC-relevanten IFC-Typen
         for element_type in self.hvac_types:
-            elements = self.ifc_file.by_type(element_type)
+            elements = safe_by_type(self.ifc_file, element_type)
             for element in elements:
                 # Grundlegende Elementinformationen extrahieren
                 element_info = self._extract_element_info(element)
@@ -345,7 +352,7 @@ class HVACExtractor:
         pattern = re.compile(name_pattern, re.IGNORECASE)
         
         for element_type in self.hvac_types:
-            elements = self.ifc_file.by_type(element_type)
+            elements = safe_by_type(self.ifc_file, element_type)
             for element in elements:
                 if hasattr(element, "Name") and element.Name and pattern.search(element.Name):
                     result.append(self._extract_element_info(element))
@@ -367,7 +374,7 @@ class HVACExtractor:
         
         # Zähle Elemente pro Typ
         for element_type in self.hvac_types:
-            elements = self.ifc_file.by_type(element_type)
+            elements = safe_by_type(self.ifc_file, element_type)
             count = len(elements)
             electronic_count = sum(1 for e in elements if self._is_electronic_controlled(e))
             
