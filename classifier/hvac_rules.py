@@ -35,19 +35,43 @@ class HVACClassifier:
         
         # HVAC-spezifische IFC-Typen
         self.hvac_types = [
-            'IfcFlowController',    # Ventile, Klappen, etc.
-            'IfcFlowFitting',       # Verbindungsstücke, Übergänge
-            'IfcFlowMovingDevice',  # Pumpen, Ventilatoren
-            'IfcFlowSegment',       # Rohre, Kanäle
-            'IfcFlowStorageDevice', # Tanks, Speicher
-            'IfcFlowTerminal',      # Auslässe, Einlässe
-            'IfcFlowTreatmentDevice', # Filter, Kühler, Heizregister
+            'IfcDuctSegment',            # Luftkanalabschnitt
+            'IfcPipeSegment',            # Rohrabschnitt
+            'IfcDuctFitting',            # Luftkanalverbindungsstück
+            'IfcPipeFitting',            # Rohrverbindungsstück
+            'IfcDuctAccessory',          # Zubehör für Luftkanäle
+            'IfcPipeAccessory',          # Zubehör für Rohre
+            'IfcDuctSilencer',           # Schalldämpfer
+            'IfcDuctDamper',             # Drosselklappe
+            'IfcFireDamper',             # Brandschutzklappe
+            'IfcValve',                  # Ventil
+            'IfcFan',                    # Ventilator
+            'IfcPump',                   # Pumpe
+            'IfcAirTerminal',            # Luftauslass, -einlass
+            'IfcAirTerminalBox',         # Luftauslassbox
+            'IfcHumidifier',             # Befeuchter
+            'IfcFilter',                 # Filter
+            'IfcChiller',                # Kältemaschine
+            'IfcBoiler',                 # Heizkessel
+            'IfcCoolingTower',           # Kühlturm
+            'IfcCompressor',             # Kompressor
+            'IfcHeatExchanger',          # Wärmetauscher
+            'IfcFlowController',         # Ventile, Klappen, etc.
+            'IfcFlowFitting',            # Verbindungsstücke, Übergänge
+            'IfcFlowMovingDevice',       # Pumpen, Ventilatoren
+            'IfcFlowSegment',            # Rohre, Kanäle
+            'IfcFlowStorageDevice',      # Tanks, Speicher
+            'IfcFlowTerminal',           # Auslässe, Einlässe
+            'IfcFlowTreatmentDevice',    # Filter, Kühler, Heizregister
             'IfcEnergyConversionDevice', # Kessel, Wärmetauscher
-            'IfcSensor',            # Sensoren
-            'IfcActuator',          # Aktoren
-            'IfcController',        # Steuerungen, Regler
-            'IfcUnitaryControlElement', # Steuergeräte
+            'IfcSensor',                 # Sensoren
+            'IfcActuator',               # Aktoren
+            'IfcController',             # Steuerungen, Regler
+            'IfcUnitaryControlElement',  # Steuergeräte
+            'IfcDistributionElement',    # Allgemeine Versorgungselemente
+            'IfcDistributionControlElement' # Steuerelemente für Versorgungssysteme
         ]
+
         
         # Elektronisch gesteuerte Komponenten-Typen
         self.electronic_types = [
